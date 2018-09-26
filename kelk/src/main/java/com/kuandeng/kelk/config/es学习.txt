@@ -1,0 +1,470 @@
+
+1.正式环境：http://192.168.5.34:9200/
+
+
+
+0.官网
+https://www.elastic.co
+空间数据的相关联系信息  http://www.lgwimonday.cn/archives/609
+
+注意  es的http端口是9200   tcp端口是9300
+
+1.下载：
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.5.2.tar.gz
+
+2.bin目录下启动（不能使用root用户启动  这个注意）
+./elasticsearch
+
+3.查看是否正常启动
+http://192.168.5.34:9200  结果不饿能访问  ，但是127.0.0.1  是可以的
+
+4.解决外网ip访问                    (参考链接：https://blog.csdn.net/buzaiqq/article/details/67637731)
+                           https://blog.csdn.net/qq_21387171/article/details/53577115
+今天在虚拟机上安装了一个ES 5.2.2
+结果curl "http://127.0.0.1:9200" 能够正常访问，可是使用外网ip就提示拒绝链接
+解决办法：vim config/elasticsearch.yml
+增加：network.host: 0.0.0.0   ------注意 这里面有个空格
+重启问题解决
+
+另外，个别虚拟机无法启动ES，查看日志如果有：
+[2017-03-28T15:35:19,948][ERROR][o.e.b.Bootstrap          ] [kSH2rCN] node validation exception bootstrap checks failed
+max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+解决办法：切换root账户 vim /etc/sysctl.conf     如果不行  再改这个文件etc/security/limits.conf
+增加一行  vm.max_map_count=655360
+接着执行 sysctl -p
+切回ES账户重新启动问题解决
+
+
+正常访问
+
+name	"83rriRF"
+cluster_name	"elasticsearch"
+cluster_uuid	"dvuWUqZ3R9mYzBIL4A6RgA"
+version	
+number	"5.5.2"
+build_hash	"b2f0c09"
+build_date	"2017-08-14T12:33:14.154Z"
+build_snapshot	false
+lucene_version	"6.6.0"
+tagline	"You Know, for Search"
+
+
+5.集群配置
+  在elasticsearch.yml添加
+  cluster.name: zwc    --master
+  node.name: master
+  node.master: true
+  network.host: 127.0.0.1
+  
+  --slave
+  cluster.name: zwc    
+  node.name: slave1
+  network.host: 192.168.233.22
+  http.port: 8200
+  discovery.zen.ping.unicast.hosts: ["192.168.233.22"]
+  
+  
+6.查看集群的健康状态
+http://192.168.5.34:9200/_cat/health?v
+  
+
+7.基本概念
+  索引：含有相同属性的文档集合
+  类型: 索引可以定义一个或多个类型，文档必须属于一个类型
+  文档：可以被索引的基本数据单位
+    
+    
+
+ 索引相当于一个数据库，类型相当于一个表，文档相当于一条记录
+
+索引：分片/备份  索引的名字必须要小写且不能有下划线
+
+8.ES  api
+api基本格式：http://<ip>:<port>/索引/类型/文档id
+常用HTTP动词  GET/PUT/POST/DELETE
+
+1.创建索引：  --这个就类似于数据库
+PUT    --put方法  
+http://192.168.5.34:9200/people    people是索引
+{
+    "settings": {  
+    	"number_of_shards":3,--分片数
+    	"number_of_replicas":1  --备份数
+    },
+    "mappings": {
+        "man": {             --这个类型     就类相似与表
+         	"properties":{   --类型的定义
+         		"name":{"type":"text"},
+         		"country":{"type":"keyword"},
+         		"age":{"type":"integer"},
+         		"date":{"type":"date","format":"yyyy-MM-dd HH:mm:ss"}
+         	}
+         },
+        "women": { 
+        	
+        }
+    }
+}
+
+2.插入   --这就是文档
+PUT    --这种PUT方式  id需要我们自己指定
+http://192.168.5.34:9200/people/man/1  --索引  类型  1是文档id
+{
+	"name":"zhangweicheng",
+    "country":"北京",
+    "age":28,
+   	"date":"2018-09-09 12:12:00"
+	
+}
+
+POST    --这种POST方式  id自动生成
+http://192.168.5.34:9200/people/man  --索引  类型  1是文档id
+{
+	"name":"zhangsan",
+    "country":"北京",
+    "age":28,
+   	"date":"2018-09-09 12:12:00"
+}
+
+结果：
+{
+    "_index": "people",
+    "_type": "man",
+    "_id": "AWYMKkpV_jO89HFLvWtD",
+    "_version": 1,
+    "result": "created",
+    "_shards": {
+        "total": 2,
+        "successful": 1,
+        "failed": 0
+    },
+    "created": true
+}
+
+3.修改文档
+POST  
+http://192.168.5.34:9200/people/man/1/_update    --man 索引   1是文档编号   _update 是修改的标记
+
+{
+	"doc":{   --要修改的内容  都写在  doc里面
+		"name":"张涵涵"
+	}
+}
+
+脚本语言的修改  先放一放
+
+4.删除 
+   删除文档  DELETE   http://192.168.5.34:9200/people/man/3
+  //这个found是很关键的  
+  {
+    "found": false,
+    "_index": "people",
+    "_type": "man",
+    "_id": "3",
+    "_version": 1,
+    "result": "not_found",
+    "_shards": {
+        "total": 2,
+        "successful": 1,
+        "failed": 0
+    }
+}
+  
+  
+  //删除索引
+  DELETE http://192.168.5.34:9200/people
+
+
+5.查询
+  
+  --按照id查询  GET  http://192.168.5.34:9200/people/man/1  查找id为1的
+  
+  --条件查询  
+     查询全部   POST  http://192.168.5.34:9200/people/_search
+           {                      --全部查询
+			"query":{  
+				"match_all":{}     --返回全部的标记
+			},
+			"from":1,    --从哪里开始   注意是从0 开始的
+			"size":9999  --返回多少条
+		  }
+		  
+		  
+         --============================================================
+         {                      --关键词查询  单个字段查询
+			"query":{  
+				"match":{"name":"zhangweicheng"}     --返回全部的标记
+			},
+			"from":1,    --从哪里开始
+			"size":9999  --返回多少条
+		  }
+                          
+		===========================================================
+		{                        --排序  可多个              
+			"query":{  
+				"match_all":{}    
+			},
+			"from":0,    
+			"size":9999,
+			"sort":[
+				     {"age":{"order":"desc"}},
+				      {"date":{"order":"desc"}}
+			       ]
+		  }
+
+
+
+
+
+
+
+
+6.空间检索
+https://www.cnblogs.com/kangoroo/p/6050692.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PUT my_space_test
+{
+  "mappings": {
+    "poi": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "locationpoint": {
+          "type":"geo_point"  //任意的地理坐标
+        },
+        "locationshape": {
+          "type": "geo_shape"  //任意的地理形状
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+POST my_space_test/poi/_bulk
+{"index":{"_id":1}}
+{"name":"New York","locationpoint":"40.664167, -73.938611","locationshape":{"type":"polygon","coordinates":[[[4.8833,52.38617],[4.87463,52.37254],[4.87875,52.36369],[4.8833,52.38617]]]}}
+{"index":{"_id":2}}
+{"name":"London","locationpoint":[-0.1275,51.5072222],"locationshape":{"type":"polygon","coordinates":[[[0,0],[4.87463,52.37254],[4.87875,52.36369],[0,0]]]}}
+{"index":{"_id":3}}
+{"name":"Moscow","locationpoint":{"lat":55.75,"lon":37.616667},"locationshape":{"type":"polygon","coordinates":[[[22,22],[4.87463,52.37254],[4.87875,52.36369],[22,22]]]}}
+{"index":{"_id":4}}
+{"name":"Sydney","locationpoint":"-33.859972, 151.211111","locationshape":{"type":"polygon","coordinates":[[[4.8833,52.38617],[4.87463,52.37254],[4.87875,52.36369],[4.8833,52.38617]]]}}
+{"index":{"_id":5}}
+{"name":"Sydney","locationpoint":"eycs0p8ukc7v","locationshape":{"type":"polygon","coordinates":[[[4.8833,52.38617],[4.87463,52.37254],[4.87875,52.36369],[4.8833,52.38617]]]}}
+
+
+
+
+
+=============================创建索引成功==================================
+{
+	"settings": {
+		"number_of_shards": 3,
+		"number_of_replicas": 1
+	},
+	"mappings": {
+		"geom": {
+			"properties": {
+				"type": {--这些是随意的字段 不重要
+					"type": "string"
+				},
+				"locationshape": {--这个一定要与文档的地理位置字段一致，例如与下面添加的geometry对应
+		          "type": "geo_shape"  
+		        },
+		        "properties": {--这个就类似于层级 json结构的构造
+				    "type":"object",
+					"properties":{
+					  	"track_id": {"type": "keyword"},
+					    "survey": {"type": "keyword"},
+					    "recog": {"type": "keyword"},
+					    "auto": {"type": "keyword"},
+					    "fusion": {"type": "keyword"}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+=====================添加数据=============================
+
+{   "type": "Feature", 
+    "geometry": {
+        "type": "LineString", 
+        "coordinate": [
+            [
+                116.45768485632, 
+                39.96509901302
+            ]
+        ]
+    }, 
+    "properties": {
+        "track_id": "1000003_20180701073630032", 
+        "survey": "2", 
+        "recog": "1", 
+        "auto": "1", 
+        "fusion": "1"
+    }
+}
+
+
+=================结果成功=============================
+{
+    "_index": "zwp1",
+    "_type": "zwp1",
+    "_id": "AWYPsSD1ftXJlJVmwrhp",
+    "_version": 1,
+    "result": "created",
+    "_shards": {
+        "total": 2,
+        "successful": 1,
+        "failed": 0
+    },
+    "created": true
+}
+
+
+
+
+
+
+
+
+
+=======================很有参考意义的===================
+{"query": {
+    "filtered": {
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "geo_shape": {
+                "locationshape": {
+                  "indexed_shape": {             //使用已经索引的形状
+                    "index": "my_space_test",
+                    "type": "poi",
+                    "id": "4",
+                    "path": "locationshape"
+                  },
+                  "relation": "within"
+                }
+              }
+            },
+            {
+              "geo_shape": {
+                "locationshape": {          //自定义形状——圆
+                  "shape": {
+                    "type": "circle",   
+                    "radius": "1km",
+                    "coordinates": [
+                      -45,
+                      45
+                    ]
+                  },
+                  "relation": "within"
+                }
+              }
+            },{
+              "geo_shape": {
+                "locationshape": {
+                  "shape": {
+                    "type": "envelope",     //自定义的形状包络线，即：box（矩形）
+                    "coordinates": [
+                      [
+                        -45,
+                        45
+                      ],
+                      [
+                        45,
+                        -45
+                      ]
+                    ]
+                  },
+                  "relation": "within"
+                }
+              }
+            },{
+              "geo_shape": {
+                "locationshape": {       //自定义的多边形，一定要注意，多边形的定义是包含在一个数组中的，是一个可扩展的数组
+                  "shape": {
+                    "type": "polygon",
+                    "coordinates": [[[1,1],[2,3],[4,2],[1,1]]]
+                  },
+                  "relation": "within"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+
+
+================查询在某个范围的查询=======================
+{
+  "query": {
+    "geo_shape": {
+      "locationshape": {
+        "relation": "within", 
+        "shape": {
+          "type": "polygon",
+          "coordinates": [[ 
+              [4.88330,52.38617],
+              [4.87463,52.37254],
+              [4.87875,52.36369],
+              [4.88939,52.35850],
+              [4.89840,52.35755],
+              [4.91909,52.36217],
+              [4.92656,52.36594],
+              [4.93368,52.36615],
+              [4.93342,52.37275],
+              [4.92690,52.37632],
+              [4.88330,52.38617]
+            ]]
+        }
+      }
+    }
+  }
+}
+
+
+https://blog.csdn.net/qq_36330643/article/details/71750372
+https://blog.csdn.net/Shiyaru1314/article/details/47446107
+https://es.xiaoleilu.com/340_Geoshapes/74_Indexing_geo_shapes.html
+http://www.bubuko.com/infodetail-2661353.html
+https://blog.csdn.net/wangxilong1991/article/details/76530524

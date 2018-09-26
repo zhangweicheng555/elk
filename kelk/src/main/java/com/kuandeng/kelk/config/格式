@@ -1,0 +1,101 @@
+{   "type": "Feature", 
+    "geometry": {
+        "type": "LineString", 
+        "coordinate": [
+            [
+                116.45768485632, 
+                39.96509901302
+            ]
+        ]
+    }, 
+    "properties": {
+        "track_id": "1000003_20180701073630032", 
+        "survey": "2", 
+        "recog": "1", 
+        "auto": "1", 
+        "fusion": "1"
+    }
+}
+
+
+
+
+{
+    "settings": {  
+    	"number_of_shards":3,
+    	"number_of_replicas":1  
+    },
+    "mappings": {
+	   "geom":{  
+		  "properties":{  
+			   			 
+	"type": {"type": "keyword"},
+    "geometry": {"type": "text"}, 
+    "properties": {
+        "track_id": {"type": "text"}, 
+        "survey": {"type": "keyword"}, 
+        "recog": {"type": "keyword"},
+        "auto": {"type": "keyword"},
+        "fusion": {"type": "keyword"},
+    }
+		  }  
+	   }   
+}
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+    "settings": {  
+    	"number_of_shards":3,
+    	"number_of_replicas":1  
+    },
+    "mappings": {
+	   "geom":{  
+		  "properties":{
+		        
+		  	    "track_id": {"type":"text"}, 
+		        "survey": {"type":"text"}, 
+		        "recog": {"type":"text"}, 
+		        "auto": {"type":"text"}, 
+		        "fusion": {"type":"text"},
+			  			 
+			 "NAME":{
+				"type":"string",
+				"fields":{
+					"NAME":{
+						"type":"string"
+					},
+					"raw":{
+						"type":"string",
+						"index":"not_analyzed"	
+					}
+				}					
+			 } 		 	 		
+		  }  
+	   }   
+}
+    }
+
+
+
+
+
+
+
+
+
+
