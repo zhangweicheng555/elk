@@ -106,9 +106,9 @@ public class ElkController {
 	
 	@ResponseBody
 	@RequestMapping(value = "/testn")
-	public SearchHits testn() {
+	public String testn() {
 		
-		return null;
+		return "success";
 	}
 	
     
