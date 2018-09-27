@@ -462,6 +462,27 @@ POST my_space_test/poi/_bulk
   }
 }
 
+==================================方圆1Km的===============================
+{
+  "query": {
+    "geo_shape": {
+      "geometry": { 
+      	"relation": "within", 
+        "shape": { 
+          "type":   "circle", 
+          "radius": "1km",
+          "coordinates": [116.55318390517,40.03830614997]
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
 
 https://blog.csdn.net/qq_36330643/article/details/71750372
 https://blog.csdn.net/Shiyaru1314/article/details/47446107
