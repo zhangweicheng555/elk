@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -24,11 +26,15 @@ import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.geo.builders.ShapeBuilders;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
 import org.elasticsearch.index.query.GeoShapeQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -170,6 +176,7 @@ public class ElkController {
 	@RequestMapping(value = "/findByRandomRange", method = RequestMethod.GET)
 	public Map<String, Object> findByRange(Double leftTopLongitude, Double leftTopLatitude, Double RightButtomLongitude,
 			Double RightButtomLatitude) throws IOException {
+		
 		Map<String, Object> map = new HashMap<>();
 		// query
 		GeoShapeQueryBuilder queryBuilder = QueryBuilders.geoShapeQuery("geometry",
@@ -200,16 +207,13 @@ public class ElkController {
 
 
 	/**
-	 * 添加
+	 * 添加  json传的添加
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/testAdd", method = RequestMethod.GET)
-	public Map<String, Object> testAdd() throws IOException {
-		// getResponse 其实这个貌似就是对应我们的返回结果 目前跟查询id的是一样的
-		XContentBuilder xContentBuilder = XContentFactory.jsonBuilder().startObject().field("type", "Feature1")
-				.endObject();
-		IndexResponse indexResponse = client.prepareIndex("geom1", "geom1").setSource(xContentBuilder).get();
-		indexResponse.getShardInfo();
+	@RequestMapping(value = "/testAddJson", method = RequestMethod.GET)
+	public Map<String, Object> testAddJson() throws IOException {
+		String json="{}";
+		IndexResponse response = client.prepareIndex("geom1", "geom1").setSource(json, XContentType.JSON).get();
 		return null;
 	}
 
@@ -236,6 +240,71 @@ public class ElkController {
 		XContentBuilder xContentBuilder = XContentFactory.jsonBuilder().startObject().field("", "").endObject();
 		updateRequest.doc(xContentBuilder);
 		UpdateResponse updateResponse = client.update(updateRequest).get();
+		
 		return null;
 	}
+	
+	/**
+	 * 根据id获取
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/testDelet1e", method = RequestMethod.GET)
+	public Map<String, Object> testDelet1e() throws IOException {
+		GetResponse response = client.prepareGet("geom1", "geom1", "1").get();
+		return null;
+	}
+	/**
+	 * 根据id删除
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/testDelet12e", method = RequestMethod.GET)
+	public Map<String, Object> testDelet12e() throws IOException {
+		DeleteResponse response = client.prepareDelete("geom1", "geom1", "12").get();
+		DeleteResponse deleteResponse = client.prepareDelete().setIndex("geom1").setType("geom1").get();
+		return null;
+	}
+	/**
+	 * 根据查询的结果批量删除操作
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/deleteBulk", method = RequestMethod.GET)
+	public Map<String, Object> deleteBulk() throws IOException {
+		MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("gender", "male");
+		BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client).filter(matchQuery).source("geom1").get();
+		long deleted = response.getDeleted();
+		return null;
+	}
+	/**
+	 * 修改操作
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/update1", method = RequestMethod.GET)
+	public Map<String, Object> update1() throws IOException {
+		//方式1
+		XContentBuilder xContentBuilder=XContentFactory.jsonBuilder().startObject().field("", "").endObject();
+		UpdateResponse updateResponse = client.prepareUpdate("geom1", "geom1", "1").setDoc(xContentBuilder).get();
+		//方式2
+		String json="{}";
+		UpdateResponse updateResponse2 = client.prepareUpdate("geom1", "geom1", "1").setDoc(json, XContentType.JSON).get();
+		
+		return null;
+	}
+	
+	
+	/**
+	 * 更新 如果不存在那么就添加
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/updateInsert", method = RequestMethod.GET)
+	public Map<String, Object> updateInsert() throws IOException, InterruptedException, ExecutionException {
+		//先建立这个 但是这个不一定在数据库中存在
+		IndexRequest request=new IndexRequest("index", "type", "id").source(XContentFactory.jsonBuilder().startObject().field("", "").endObject());
+		//更新请求 注意 如果找不到我更新的内容 那么久添加了一条数据
+		UpdateRequest updateRequest=new UpdateRequest("index", "type", "id").doc(XContentFactory.jsonBuilder().startObject().field("", "").endObject()).upsert(request);
+		UpdateResponse response = client.update(updateRequest).get();
+		return null;
+	}
+
 }
