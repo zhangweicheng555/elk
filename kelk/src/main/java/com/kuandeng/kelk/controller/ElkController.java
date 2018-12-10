@@ -1,4 +1,4 @@
-package com.kuandeng.kelk.controller;
+/*package com.kuandeng.kelk.controller;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,8 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
@@ -85,9 +91,9 @@ public class ElkController {
 		return "success";
 	}
 
-	/**
+	*//**
 	 * 将json格式的数据导入索引中
-	 */
+	 *//*
 	private void insertElk(String line) {
 		System.out.println(line);
 		// {"type":"Feature","geometry":{"type":"LineString","coordinate":[[116.45768485632,39.96509901302],[116.45259957425,39.9605453452],[116.45175574526,39.95982855956],[116.45077438907,39.95895217194],[116.45058579558,39.95881661667],[116.45038272396,39.9587131992],[116.44957614438,39.95846802419],[116.44928076588,39.95832726994],[116.44902624239,39.95812890981],[116.44795760085,39.95716989054],[116.44779818589,39.95706073559],[116.44770221513,39.95703722857],[116.44759374881,39.95705250955],[116.44723275438,39.95722471325],[116.4466842971,39.95759048583],[116.44612628491,39.957936435],[116.4443417694,39.9591306621]]},"properties":{"track_id":"1000003_20180701073630032","survey":"2","recog":"1","auto":"1","fusion":"1"}}
@@ -99,10 +105,10 @@ public class ElkController {
 		}
 	}
 
-	/**
+	*//**
 	 * INTERSECTS("intersects"), DISJOINT("disjoint"), WITHIN("within"),
 	 * CONTAINS("contains");
-	 */
+	 *//*
 
 	@ResponseBody
 	@RequestMapping(value = "/testn", method = RequestMethod.GET)
@@ -111,9 +117,9 @@ public class ElkController {
 		return "success";
 	}
 
-	/**
+	*//**
 	 * 测试api 查询
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testQuery", method = RequestMethod.GET)
 	public Map<String, Object> testQuery() {
@@ -132,9 +138,9 @@ public class ElkController {
 		return map;
 	}
 
-	/**
+	*//**
 	 * 测试api 符合查询
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testFQuery", method = RequestMethod.GET)
 	public Map<String, Object> testFQuery() {
@@ -163,9 +169,9 @@ public class ElkController {
 		return null;
 	}
 
-	/**
+	*//**
 	 * 正式查询 左上 右下 矩形查询
-	 */
+	 *//*
 	@ApiOperation(value = "对角矩形查询", notes = "矩形查询", httpMethod = "GET")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "leftTopLongitude", value = "左上经度-45", required = true, dataType = "double", paramType = "query"),
@@ -206,9 +212,9 @@ public class ElkController {
 	}
 
 
-	/**
+	*//**
 	 * 添加  json传的添加
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testAddJson", method = RequestMethod.GET)
 	public Map<String, Object> testAddJson() throws IOException {
@@ -217,9 +223,9 @@ public class ElkController {
 		return null;
 	}
 
-	/**
+	*//**
 	 * 删除
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testDelete", method = RequestMethod.GET)
 	public Map<String, Object> testDelete() throws IOException {
@@ -227,12 +233,12 @@ public class ElkController {
 		return null;
 	}
 
-	/**
+	*//**
 	 * 更新
 	 * 
 	 * @throws ExecutionException
 	 * @throws InterruptedException
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testUpdate", method = RequestMethod.GET)
 	public Map<String, Object> testUpdate() throws IOException, InterruptedException, ExecutionException {
@@ -244,18 +250,18 @@ public class ElkController {
 		return null;
 	}
 	
-	/**
+	*//**
 	 * 根据id获取
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testDelet1e", method = RequestMethod.GET)
 	public Map<String, Object> testDelet1e() throws IOException {
 		GetResponse response = client.prepareGet("geom1", "geom1", "1").get();
 		return null;
 	}
-	/**
+	*//**
 	 * 根据id删除
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/testDelet12e", method = RequestMethod.GET)
 	public Map<String, Object> testDelet12e() throws IOException {
@@ -263,9 +269,9 @@ public class ElkController {
 		DeleteResponse deleteResponse = client.prepareDelete().setIndex("geom1").setType("geom1").get();
 		return null;
 	}
-	/**
+	*//**
 	 * 根据查询的结果批量删除操作
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/deleteBulk", method = RequestMethod.GET)
 	public Map<String, Object> deleteBulk() throws IOException {
@@ -274,9 +280,9 @@ public class ElkController {
 		long deleted = response.getDeleted();
 		return null;
 	}
-	/**
+	*//**
 	 * 修改操作
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/update1", method = RequestMethod.GET)
 	public Map<String, Object> update1() throws IOException {
@@ -291,11 +297,11 @@ public class ElkController {
 	}
 	
 	
-	/**
+	*//**
 	 * 更新 如果不存在那么就添加
 	 * @throws ExecutionException 
 	 * @throws InterruptedException 
-	 */
+	 *//*
 	@ResponseBody
 	@RequestMapping(value = "/updateInsert", method = RequestMethod.GET)
 	public Map<String, Object> updateInsert() throws IOException, InterruptedException, ExecutionException {
@@ -306,5 +312,75 @@ public class ElkController {
 		UpdateResponse response = client.update(updateRequest).get();
 		return null;
 	}
+	*//**
+	 * 根据条件查询多个
+	 *    他会根据你的条件 返回multiGetResponse
+	 *    然后遍历得到各自的  response
+	 *//*
+	@ResponseBody
+	@RequestMapping(value = "/prepareMultiGet", method = RequestMethod.GET)
+	public Map<String, Object> prepareMultiGet() throws IOException, InterruptedException, ExecutionException {
+		MultiGetResponse multiGetResponse = client.prepareMultiGet()
+		      .add("index1", "type1", "id1")
+		      .add("index2", "type2", "id2")
+		      .add("index2", "type2", "id3")
+		      .get();
+		for (MultiGetItemResponse multiGetItemResponse : multiGetResponse) {
+			GetResponse response=multiGetItemResponse.getResponse();
+			if (response.isExists()) {
+				String json = response.getSourceAsString();
+			}
+		}
+		return null;
+	}
+	*//**
+	 * 根据条件查询多个
+	 *    他会根据你的条件 返回multiGetResponse
+	 *    然后遍历得到各自的  response
+	 *//*
+	@ResponseBody
+	@RequestMapping(value = "/updateInsert1", method = RequestMethod.GET)
+	public Map<String, Object> updateInsert1() throws IOException, InterruptedException, ExecutionException {
+		MultiGetResponse multiGetResponse = client.prepareMultiGet()
+				.add("index1", "type1", "id1")
+				.add("index2", "type2", "id2")
+				.add("index2", "type2", "id3")
+				.get();
+		for (MultiGetItemResponse multiGetItemResponse : multiGetResponse) {
+			GetResponse response=multiGetItemResponse.getResponse();
+			if (response.isExists()) {
+				String json = response.getSourceAsString();
+			}
+		}
+		return null;
+	}
+	*//**
+	 * 批量操作
+	 *//*
+	@ResponseBody
+	@RequestMapping(value = "/updateInsert2", method = RequestMethod.GET)
+	public Map<String, Object> updateInsert2() throws IOException, InterruptedException, ExecutionException {
+		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+		//下面的这个可以有多个
+		bulkRequestBuilder.add(client.prepareIndex("index", "type", "id").setSource(XContentFactory.jsonBuilder().startObject().field("", "").endObject()));
+		
+		BulkResponse response = bulkRequestBuilder.get();
+		
+		if (response.hasFailures()) {
+		}
+		
+		*//**
+		 * 一下是测试
+		 *//*
+		DeleteRequest request=new DeleteRequest("index", "type", "id");
+		//下面这个可以有多个request
+		BulkRequestBuilder bulkRequestBuilder2 = client.prepareBulk();
+		bulkRequestBuilder2.add(request);
+		BulkResponse bulkResponse = bulkRequestBuilder2.get();
+		return null;
+	}
 
+	
+	
 }
+*/

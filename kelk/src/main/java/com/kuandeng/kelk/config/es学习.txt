@@ -1,4 +1,102 @@
 
+===============================================
+
+{
+	"name":"zheng lanying",
+	"age":61,
+	"address":"shandong weifang",
+	"school":"beida",
+	"birth":"1653-03-28",
+	"hobby":{
+		"fruit":"mater",
+		"food":",mifan"
+	},
+	"tags":["run","work"]
+}
+
+
+
+
+
+{
+	"name":"zhang weicheng",
+	"age":26,
+	"address":"shandong weifang",
+	"school":"nanchangdaxue",
+	"birth":"1990-01-24",
+	"hobby":{
+		"fruit":"apple",
+		"food":"mantou"
+	},
+	"tags":["book","apple","banana"]
+}
+
+{
+	"name":"zhang lili",
+	"age":27,
+	"address":"beijing haidian",
+	"school":"beijingdaxue",
+	"birth":"1989-01-28",
+	"hobby":{
+		"fruit":"water",
+		"food":"bing"
+	},
+	"tags":["movie","eat"]
+}
+
+
+
+
+
+{
+	"name":"zhang jihan",
+	"age":10,
+	"address":"shandong anqiu",
+	"school":"beijingdaxue",
+	"birth":"2002-03-28",
+	"hobby":{
+		"fruit":"mater",
+		"food":",mifan"
+	},
+	"tags":["run","eat"]
+}
+
+
+
+
+
+{
+	"name":"liu anran",
+	"age":2,
+	"address":"shandong linghe",
+	"school":"xiaoxue",
+	"birth":"2016-03-28",
+	"hobby":{
+		"fruit":"sleep",
+		"food":",nai"
+	},
+	"tags":["run","sleep"]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1.正式环境：http://192.168.5.34:9200/
 
 
@@ -489,3 +587,51 @@ https://blog.csdn.net/Shiyaru1314/article/details/47446107
 https://es.xiaoleilu.com/340_Geoshapes/74_Indexing_geo_shapes.html
 http://www.bubuko.com/infodetail-2661353.html
 https://blog.csdn.net/wangxilong1991/article/details/76530524
+
+
+
+
+
+
+
+
+
+============================第二集=====================================
+
+1.查看指定索引的mapping
+GET http://192.168.5.34:9200/geom1/_mapping/geom1
+
+2.查询数据
+GET http://192.168.5.34:9200/geom1/_search
+
+3.term  filter不分词查询
+POST http://192.168.5.34:9200/geom1/geom1/_search
+	{
+		"query":{
+			"constant_score" :{--将所有的文档分数设置为一样
+				"filter":{
+					"term":{
+						"properties.auto":"0"
+					}
+				}
+			}
+		}
+	}
+term filter查询的时候 直接全部匹配，不分词查询，注意这就要求你建立索引的时候 字段不要分词，
+因为字段分词之后   你在用原来的信息去匹配是匹配不上的。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

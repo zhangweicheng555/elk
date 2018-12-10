@@ -1,26 +1,27 @@
 package com.kuandeng.kelk.config;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class ElasticsearchConfig {
 
+	private static final String HTTP_SCHEME = "http";
+	public static final int MAX_PAGE_SIZE = 10000;
+
 	@Bean
-	public TransportClient transportClient() throws UnknownHostException {
-		// 如果有多个地址 一个个 add进去
-		InetSocketTransportAddress node = new InetSocketTransportAddress(InetAddress.getByName("192.168.5.34"), 9300);
-		
-		Settings settings = Settings.builder().put("cluster.name", "elasticsearch").build();
-		
-		TransportClient client=new PreBuiltTransportClient(settings);
-		client.addTransportAddress(node);//有多个地址 生成多个就可以  然后多个添加
-		
-		return client;
+	public RestClientBuilder restClientBuilder() {
+		HttpHost[] hosts = new HttpHost[] {new HttpHost("192.168.5.34", 9200, HTTP_SCHEME)};
+		return RestClient.builder(hosts);
+	}
+
+	@Bean
+	public RestHighLevelClient restHighLevelClient(@Autowired RestClientBuilder restClientBuilder) {
+		restClientBuilder.setMaxRetryTimeoutMillis(60000);
+		return new RestHighLevelClient(restClientBuilder.build());
 	}
 }
