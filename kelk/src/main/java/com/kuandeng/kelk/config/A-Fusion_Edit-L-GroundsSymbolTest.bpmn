@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="hdEdit">
+  <process id="A-Fusion_Edit-L-GroundsSymbolTest" name="灯杆、路牌、多轨迹定位目标并行流程" isExecutable="true" activiti:candidateStarterGroups="prod_group_leader">
+    <startEvent id="startevent" name="开始" activiti:async="true" activiti:exclusive="false">
+      <extensionElements>
+        <activiti:formProperty id="sourceDataType" name="来源数据类型" type="string" default="ground" writable="false" required="true"></activiti:formProperty>
+        <activiti:formProperty id="sourceDataIds" name="来源数据" type="string" required="true"></activiti:formProperty>
+        <activiti:formProperty id="supportTrans" name="是否入成果库" type="boolean" default="false"></activiti:formProperty>
+        <activiti:formProperty id="sceneCode" name=" 场景" type="string" default="HD_DATA_GROUND_SYMBOL"></activiti:formProperty>
+      </extensionElements>
+    </startEvent>
+    <sequenceFlow id="flow187" sourceRef="startevent" targetRef="CreateCopy"></sequenceFlow>
+    <callActivity id="CreateCopy" name="创建副本" activiti:async="true" activiti:exclusive="false" calledElement="S-ServiceProcess">
+      <extensionElements>
+        <activiti:in sourceExpression="createFusionCopySst" target="startServiceBean"></activiti:in>
+        <activiti:in sourceExpression="createCopyEst" target="endServiceBean"></activiti:in>
+        <activiti:in source="taskId" target="taskId"></activiti:in>
+        <activiti:in sourceExpression="${execution.getProcessInstanceId()}" target="superPiId"></activiti:in>
+        <activiti:in sourceExpression="${execution.getCurrentActivityName()}" target="superActivityName"></activiti:in>
+        <activiti:in source="starter" target="handler"></activiti:in>
+        <activiti:in sourceExpression="createCopyTaskService" target="serviceType"></activiti:in>
+        <activiti:in sourceExpression="fusion" target="bussCode"></activiti:in>
+      </extensionElements>
+    </callActivity>
+    <parallelGateway id="parallelgateway1" name="Parallel Gateway"></parallelGateway>
+    <parallelGateway id="parallelgateway2" name="Parallel Gateway"></parallelGateway>
+    <callActivity id="PoleSymbol" name="灯杆、路牌定位目标" activiti:async="true" activiti:exclusive="false" calledElement="S-ServiceProcess">
+      <extensionElements>
+        <activiti:in sourceExpression="poleSymbolSst" target="startServiceBean"></activiti:in>
+        <activiti:in sourceExpression="fusionEst" target="endServiceBean"></activiti:in>
+        <activiti:in sourceExpression="${execution.getProcessInstanceId()}" target="superPiId"></activiti:in>
+        <activiti:in sourceExpression="${execution.getCurrentActivityName()}" target="superActivityName"></activiti:in>
+        <activiti:in sourceExpression="fusion" target="bussCode"></activiti:in>
+        <activiti:in source="taskId" target="taskId"></activiti:in>
+        <activiti:in source="starter" target="handler"></activiti:in>
+      </extensionElements>
+    </callActivity>
+    <callActivity id="MultiGroundsSymbol" name="多轨迹定位目标" activiti:async="true" activiti:exclusive="false" calledElement="S-ServiceProcess">
+      <extensionElements>
+        <activiti:in sourceExpression="multiGroundSymbolSst" target="startServiceBean"></activiti:in>
+        <activiti:in sourceExpression="fusionEst" target="endServiceBean"></activiti:in>
+        <activiti:in sourceExpression="${execution.getProcessInstanceId()}" target="superPiId"></activiti:in>
+        <activiti:in sourceExpression="${execution.getCurrentActivityName()}" target="superActivityName"></activiti:in>
+        <activiti:in sourceExpression="fusion" target="bussCode"></activiti:in>
+        <activiti:in source="taskId" target="taskId"></activiti:in>
+        <activiti:in source="starter" target="handler"></activiti:in>
+      </extensionElements>
+    </callActivity>
+    <sequenceFlow id="flow253" sourceRef="CreateCopy" targetRef="parallelgateway1"></sequenceFlow>
+    <sequenceFlow id="flow255" sourceRef="parallelgateway1" targetRef="PoleSymbol"></sequenceFlow>
+    <sequenceFlow id="flow256" sourceRef="parallelgateway1" targetRef="MultiGroundsSymbol"></sequenceFlow>
+    <sequenceFlow id="flow258" sourceRef="PoleSymbol" targetRef="parallelgateway2"></sequenceFlow>
+    <sequenceFlow id="flow259" sourceRef="MultiGroundsSymbol" targetRef="parallelgateway2"></sequenceFlow>
+    <callActivity id="EditCommit" name="提交成果库" activiti:async="true" activiti:exclusive="false" calledElement="S-ServiceProcess">
+      <extensionElements>
+        <activiti:in sourceExpression="editCommitSst" target="startServiceBean"></activiti:in>
+        <activiti:in sourceExpression="${execution.getProcessInstanceId()}" target="superPiId"></activiti:in>
+        <activiti:in sourceExpression="${execution.getCurrentActivityName()}" target="superActivityName"></activiti:in>
+        <activiti:in source="taskId" target="taskId"></activiti:in>
+        <activiti:in source="editor" target="handler"></activiti:in>
+        <activiti:in sourceExpression="notTransSyncTaskService" target="serviceType"></activiti:in>
+        <activiti:in sourceExpression="edit" target="bussCode"></activiti:in>
+      </extensionElements>
+    </callActivity>
+    <sequenceFlow id="flow260" sourceRef="parallelgateway2" targetRef="EditCommit"></sequenceFlow>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <sequenceFlow id="flow261" sourceRef="EditCommit" targetRef="endevent1"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_A-Fusion_Edit-L-GroundsSymbolTest">
+    <bpmndi:BPMNPlane bpmnElement="A-Fusion_Edit-L-GroundsSymbolTest" id="BPMNPlane_A-Fusion_Edit-L-GroundsSymbolTest">
+      <bpmndi:BPMNShape bpmnElement="startevent" id="BPMNShape_startevent">
+        <omgdc:Bounds height="35.0" width="35.0" x="60.0" y="163.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="CreateCopy" id="BPMNShape_CreateCopy">
+        <omgdc:Bounds height="55.0" width="111.0" x="210.0" y="153.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="parallelgateway1" id="BPMNShape_parallelgateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="400.0" y="160.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="parallelgateway2" id="BPMNShape_parallelgateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="820.0" y="160.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="PoleSymbol" id="BPMNShape_PoleSymbol">
+        <omgdc:Bounds height="65.0" width="133.0" x="557.0" y="30.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="MultiGroundsSymbol" id="BPMNShape_MultiGroundsSymbol">
+        <omgdc:Bounds height="55.0" width="127.0" x="563.0" y="270.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="EditCommit" id="BPMNShape_EditCommit">
+        <omgdc:Bounds height="55.0" width="105.0" x="970.0" y="153.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="1190.0" y="163.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow187" id="BPMNEdge_flow187">
+        <omgdi:waypoint x="95.0" y="180.0"></omgdi:waypoint>
+        <omgdi:waypoint x="210.0" y="180.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow253" id="BPMNEdge_flow253">
+        <omgdi:waypoint x="321.0" y="180.0"></omgdi:waypoint>
+        <omgdi:waypoint x="400.0" y="180.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow255" id="BPMNEdge_flow255">
+        <omgdi:waypoint x="420.0" y="160.0"></omgdi:waypoint>
+        <omgdi:waypoint x="420.0" y="67.0"></omgdi:waypoint>
+        <omgdi:waypoint x="557.0" y="62.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow256" id="BPMNEdge_flow256">
+        <omgdi:waypoint x="420.0" y="200.0"></omgdi:waypoint>
+        <omgdi:waypoint x="420.0" y="297.0"></omgdi:waypoint>
+        <omgdi:waypoint x="563.0" y="297.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow258" id="BPMNEdge_flow258">
+        <omgdi:waypoint x="690.0" y="62.0"></omgdi:waypoint>
+        <omgdi:waypoint x="839.0" y="67.0"></omgdi:waypoint>
+        <omgdi:waypoint x="840.0" y="160.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow259" id="BPMNEdge_flow259">
+        <omgdi:waypoint x="690.0" y="297.0"></omgdi:waypoint>
+        <omgdi:waypoint x="839.0" y="297.0"></omgdi:waypoint>
+        <omgdi:waypoint x="840.0" y="200.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow260" id="BPMNEdge_flow260">
+        <omgdi:waypoint x="860.0" y="180.0"></omgdi:waypoint>
+        <omgdi:waypoint x="970.0" y="180.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow261" id="BPMNEdge_flow261">
+        <omgdi:waypoint x="1075.0" y="180.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1190.0" y="180.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
