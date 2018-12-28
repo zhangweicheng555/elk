@@ -73,7 +73,7 @@ public class TrackPortClient {
 	 * @throws FileNotFoundException
 	 */
 	public String add1() throws FileNotFoundException {
-		File csv = ResourceUtils.getFile("classpath:static/resul2.json");
+		File csv = ResourceUtils.getFile("classpath:static/result.json");
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(csv));
@@ -100,7 +100,7 @@ public class TrackPortClient {
 	
 	private void insertElk1(String str) throws InterruptedException, ExecutionException {
 		if (str != null && str != "" && str.trim().length() > 0) {
-			IndexRequest request = new IndexRequest("geomn", "geom");
+			IndexRequest request = new IndexRequest("geom", "geom");
 			request.source(str,XContentType.JSON);
 			transportClient.index(request).get();
 		}
