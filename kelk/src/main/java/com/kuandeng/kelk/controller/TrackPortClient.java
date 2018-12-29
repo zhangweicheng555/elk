@@ -7,8 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import org.apache.lucene.spatial3d.geom.GeoPoint;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -21,8 +24,13 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.geo.ShapeRelation;
+import org.elasticsearch.common.geo.XShapeCollection;
+import org.elasticsearch.common.geo.builders.ShapeBuilders;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
+import org.elasticsearch.index.query.GeoShapeQueryBuilder;
 import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -38,6 +46,8 @@ import org.elasticsearch.search.aggregations.metrics.avg.AvgAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.spatial4j.shape.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ResourceUtils;
@@ -55,19 +65,72 @@ public class TrackPortClient {
 	public static void main(String[] args) {
 		String str = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"LineString\",\"coordinates\":[[[116.45768485632,39.96509901302],[116.45259957425,39.9605453452],[116.45175574526,39.95982855956],[116.45077438907,39.95895217194],[116.45058579558,39.95881661667],[116.45038272396,39.9587131992],[116.44957614438,39.95846802419],[116.44928076588,39.95832726994],[116.44902624239,39.95812890981],[116.44795760085,39.95716989054],[116.44779818589,39.95706073559],[116.44770221513,39.95703722857],[116.44759374881,39.95705250955],[116.44723275438,39.95722471325],[116.4466842971,39.95759048583],[116.44612628491,39.957936435],[116.4443417694,39.9591306621]]]},\"properties\":{\"track_id\":\"1000003_20180701073630032\",\"survey\":\"2\",\"recog\":\"1\",\"auto\":\"1\",\"fusion\":\"1\"}}";
 		System.out.println(str);
-		System.out.println(str.substring(0, str.indexOf("]]]}"))+"]]]}}");
+		System.out.println(str.substring(0, str.indexOf("]]]}")) + "]]]}}");
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public String test() throws FileNotFoundException {
-
-		add1();
-		return "success12121212";
+	public Object test() throws FileNotFoundException, InterruptedException, ExecutionException {
+		return geoBoxquery();
 	}
 
 	/**
-	 * 批量导入数据   成功了
+	 * geobox查询
+	 * 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	private Object geoBoxquery() throws InterruptedException, ExecutionException {
+		GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = new GeoBoundingBoxQueryBuilder("geometry");
+		org.elasticsearch.search.aggregations.support.ValuesSource.GeoPoint geoPoint1=new GeoPoint(40.8, -74.0,0);
+		org.elasticsearch.search.aggregations.support.ValuesSource.GeoPoint geoPoint2=new GeoPoint(40.7, -73.0,0);
+		geoBoundingBoxQueryBuilder.setCorners(topLeft, bottomRight);
+		geoBoundingBoxQueryBuilder.setCorners(40.8, -74.0, );
+
+		SearchRequest request = new SearchRequest("geom");
+		request.types("geom");
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(geoBoundingBoxQueryBuilder);
+		request.source(sourceBuilder);
+		return transportClient.search(request).get();
+	}
+
+	/**
+	 * 空间位置查询 GeoShapeQuery
+	 * 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	@SuppressWarnings("deprecation")
+	private SearchResponse geoquery() throws InterruptedException, ExecutionException {
+		List<Coordinate> points = new ArrayList<>();
+		Coordinate c1 = new Coordinate(116.23790171916, 40.16728581574);
+		Coordinate c2 = new Coordinate(116.23650609399, 40.17225717213);
+		Coordinate c3 = new Coordinate(116.23633473033, 40.17278619292);
+		Coordinate c4 = new Coordinate(116.23614847086, 40.17326687872);
+		Coordinate c5 = new Coordinate(116.23582308442, 40.17394986874);
+		Coordinate c6 = new Coordinate(116.23148129945, 40.1823051491);
+		points.add(c1);
+		points.add(c2);
+		points.add(c3);
+		points.add(c4);
+		points.add(c5);
+		points.add(c6);
+		GeoShapeQueryBuilder qb = new GeoShapeQueryBuilder("geometry", ShapeBuilders.newMultiPoint(points));
+		qb.relation(ShapeRelation.INTERSECTS);
+
+		SearchRequest request = new SearchRequest("geom");
+		request.types("geom");
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(qb);
+		request.source(sourceBuilder);
+		SearchResponse response = transportClient.search(request).get();
+		return response;
+
+	}
+
+	/**
+	 * 批量导入数据 成功了
 	 * 
 	 * @return
 	 * @throws FileNotFoundException
@@ -97,16 +160,17 @@ public class TrackPortClient {
 		}
 		return "success";
 	}
-	
+
 	private void insertElk1(String str) throws InterruptedException, ExecutionException {
 		if (str != null && str != "" && str.trim().length() > 0) {
 			IndexRequest request = new IndexRequest("geom", "geom");
-			request.source(str,XContentType.JSON);
+			request.source(str, XContentType.JSON);
 			transportClient.index(request).get();
 		}
 	}
+
 	/**
-	 * 批量导入数据   成功了
+	 * 批量导入数据 成功了
 	 * 
 	 * @return
 	 * @throws FileNotFoundException
@@ -140,91 +204,35 @@ public class TrackPortClient {
 	private void insertElk(String str) throws InterruptedException, ExecutionException {
 		if (str != null && str != "" && str.trim().length() > 0) {
 			IndexRequest request = new IndexRequest("geomn", "geom");
-			int begin=str.indexOf("[[[");
-			int end=str.indexOf("]]]");
-			String beginStr=str.substring(begin,end);
-			String endStr=beginStr.substring(3,beginStr.indexOf("]"));
-			String finalStr="["+endStr+"]";
-			str=str.replace("]]]", "],"+finalStr+"]]");
+			int begin = str.indexOf("[[[");
+			int end = str.indexOf("]]]");
+			String beginStr = str.substring(begin, end);
+			String endStr = beginStr.substring(3, beginStr.indexOf("]"));
+			String finalStr = "[" + endStr + "]";
+			str = str.replace("]]]", "]," + finalStr + "]]");
 			System.out.println(str);
-		//	String strModel=str.substring(0, str.indexOf("]]]}"))+"]]]}}";
-			request.source(str,XContentType.JSON);
+			// String strModel=str.substring(0, str.indexOf("]]]}"))+"]]]}}";
+			request.source(str, XContentType.JSON);
 			transportClient.index(request).get();
 		}
 	}
-	/**
-	 {
-  "mappings": {
-    "geom": {
-       "properties": {
-          "location": {
-             "type": "geo_shape"
-          },
-          
-                            "type": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            },"properties": {
-                        "properties": {
-                            "auto": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            },
-                            "fusion": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            },
-                            "recog": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            },
-                            "survey": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            },
-                            "track_id": {
-                                "type": "text",
-                                "fields": {
-                                    "keyword": {
-                                        "type": "keyword",
-                                        "ignore_above": 256
-                                    }
-                                }
-                            }
-                        }
-                    }
-       }
-    }
-  }
-}
 
+	/**
+	 * { "mappings": { "geom": { "properties": { "location": { "type": "geo_shape"
+	 * },
+	 * 
+	 * "type": { "type": "text", "fields": { "keyword": { "type": "keyword",
+	 * "ignore_above": 256 } } },"properties": { "properties": { "auto": { "type":
+	 * "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+	 * }, "fusion": { "type": "text", "fields": { "keyword": { "type": "keyword",
+	 * "ignore_above": 256 } } }, "recog": { "type": "text", "fields": { "keyword":
+	 * { "type": "keyword", "ignore_above": 256 } } }, "survey": { "type": "text",
+	 * "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } },
+	 * "track_id": { "type": "text", "fields": { "keyword": { "type": "keyword",
+	 * "ignore_above": 256 } } } } } } } } }
+	 * 
 	 */
-	
+
 	/**
 	 * mget操作
 	 * 

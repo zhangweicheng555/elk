@@ -56,6 +56,25 @@
 		    <version>2.11.1</version>
 		</dependency>
 		
+		<!-- geoshape query 依赖 -->
+		<dependency>
+		    <groupId>org.locationtech.spatial4j</groupId>
+		    <artifactId>spatial4j</artifactId>
+		    <version>0.7</version>                        
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.locationtech.jts</groupId>
+		    <artifactId>jts-core</artifactId>
+		    <version>1.15.0</version>                         
+		    <exclusions>
+		        <exclusion>
+		            <groupId>xerces</groupId>
+		            <artifactId>xercesImpl</artifactId>
+		        </exclusion>
+		    </exclusions>
+		</dependency>
+		
 		<!-- boot整合 es开始 他的boot是1.56 <dependency> <groupId>org.elasticsearch</groupId> 
 			<artifactId>elasticsearch</artifactId> </dependency> -->
 		<!-- Java Low Level REST Client <dependency> <groupId>org.elasticsearch.client</groupId> 
