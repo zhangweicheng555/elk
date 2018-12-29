@@ -81,18 +81,7 @@ public class TrackPortClient {
 	 * @throws InterruptedException
 	 */
 	private Object geoBoxquery() throws InterruptedException, ExecutionException {
-		GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = new GeoBoundingBoxQueryBuilder("geometry");
-		org.elasticsearch.search.aggregations.support.ValuesSource.GeoPoint geoPoint1=new GeoPoint(40.8, -74.0,0);
-		org.elasticsearch.search.aggregations.support.ValuesSource.GeoPoint geoPoint2=new GeoPoint(40.7, -73.0,0);
-		geoBoundingBoxQueryBuilder.setCorners(topLeft, bottomRight);
-		geoBoundingBoxQueryBuilder.setCorners(40.8, -74.0, );
-
-		SearchRequest request = new SearchRequest("geom");
-		request.types("geom");
-		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-		sourceBuilder.query(geoBoundingBoxQueryBuilder);
-		request.source(sourceBuilder);
-		return transportClient.search(request).get();
+		return null;
 	}
 
 	/**
