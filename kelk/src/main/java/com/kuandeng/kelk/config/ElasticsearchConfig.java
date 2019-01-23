@@ -18,7 +18,7 @@ public class ElasticsearchConfig {
 		
 		Settings settings = Settings.builder().put("cluster.name", "elasticsearch").put("client.transport.sniff", true).build();
 		TransportClient transportClient = new PreBuiltTransportClient(settings);
-		TransportAddress transportAddress = new TransportAddress(InetAddress.getByName("192.168.1.40"), 9300);
+		TransportAddress transportAddress = new TransportAddress(InetAddress.getByName("localhost"), 9300);
 		transportClient.addTransportAddress(transportAddress);
 		return transportClient;
 	}

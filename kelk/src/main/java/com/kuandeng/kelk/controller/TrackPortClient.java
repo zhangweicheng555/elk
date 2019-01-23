@@ -2,22 +2,27 @@ package com.kuandeng.kelk.controller;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import org.apache.lucene.spatial3d.geom.GeoPoint;
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -25,17 +30,19 @@ import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.geo.ShapeRelation;
-import org.elasticsearch.common.geo.XShapeCollection;
 import org.elasticsearch.common.geo.builders.ShapeBuilders;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
 import org.elasticsearch.index.query.GeoShapeQueryBuilder;
 import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
@@ -46,11 +53,12 @@ import org.elasticsearch.search.aggregations.metrics.avg.AvgAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.spatial4j.shape.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ResourceUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -62,10 +70,104 @@ public class TrackPortClient {
 	@Autowired
 	private TransportClient transportClient;
 
-	public static void main(String[] args) {
-		String str = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"LineString\",\"coordinates\":[[[116.45768485632,39.96509901302],[116.45259957425,39.9605453452],[116.45175574526,39.95982855956],[116.45077438907,39.95895217194],[116.45058579558,39.95881661667],[116.45038272396,39.9587131992],[116.44957614438,39.95846802419],[116.44928076588,39.95832726994],[116.44902624239,39.95812890981],[116.44795760085,39.95716989054],[116.44779818589,39.95706073559],[116.44770221513,39.95703722857],[116.44759374881,39.95705250955],[116.44723275438,39.95722471325],[116.4466842971,39.95759048583],[116.44612628491,39.957936435],[116.4443417694,39.9591306621]]]},\"properties\":{\"track_id\":\"1000003_20180701073630032\",\"survey\":\"2\",\"recog\":\"1\",\"auto\":\"1\",\"fusion\":\"1\"}}";
-		System.out.println(str);
-		System.out.println(str.substring(0, str.indexOf("]]]}")) + "]]]}}");
+	@ResponseBody
+	@RequestMapping(value = "/zwc")
+	public Object testMode() throws InterruptedException, ExecutionException {
+		return agg1();
+	}
+	@ResponseBody
+	@RequestMapping(value = "/zwc1")
+	public Object testMode1() throws InterruptedException, ExecutionException {
+		return agg2();
+	}
+
+	
+	private Object showModel() throws InterruptedException, ExecutionException {
+		SearchRequest request=new SearchRequest("geom");
+		request.types("geom");
+		SearchSourceBuilder sourceBuilder=new SearchSourceBuilder();
+		TermQueryBuilder termQuery = QueryBuilders.termQuery("properties.ADCODE", "130600");
+		sourceBuilder.query(termQuery);
+		request.source(sourceBuilder);
+		SearchResponse searchResponse = transportClient.search(request).get();
+		return searchResponse;
+	}
+
+
+	/**
+	 * 平台导出的信息在此项目中导入
+	 * @return
+	 * @throws Exception
+	 */
+	@ResponseBody
+	@GetMapping(value = "/import")
+	public Object TagImport() throws Exception {
+
+		BulkRequest request=new BulkRequest();
+		InputStream inputStream = new FileInputStream(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX+"33.dat"));
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+		String str = null;
+		while ((str = bufferedReader.readLine()) != null) {
+			IndexRequest indexRequest=new IndexRequest("geom", "geom");
+			indexRequest.source(str, XContentType.JSON);
+			request.add(indexRequest);
+		}
+		BulkResponse bulkResponse = transportClient.bulk(request).get();
+		
+		if (inputStream != null) {
+			inputStream.close();
+		}
+		if (bufferedReader != null) {
+			bufferedReader.close();
+		}
+		return bulkResponse;
+	}
+
+	private IndexResponse show1() throws InterruptedException, ExecutionException {
+		IndexRequest request = new IndexRequest("stu", "stu", "1");
+		Map<String, Object> map = new HashMap<>();
+		map.put("name", "zhangsan");
+		map.put("age", 1);
+		request.source(map);
+		IndexResponse indexResponse = transportClient.index(request).get();
+		return indexResponse;
+	}
+
+	private static void show() throws UnknownHostException, InterruptedException, ExecutionException {
+		Settings settings = Settings.builder().put("cluster.name", "elasticsearch").put("client.transport.sniff", true)
+				.build();
+		TransportClient transportClient = new PreBuiltTransportClient(settings);
+		TransportAddress transportAddress = new TransportAddress(InetAddress.getByName("192.168.1.40"), 9300);
+		transportClient.addTransportAddress(transportAddress);
+
+		BulkByScrollResponse bulkByScrollResponse = DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient)
+				.filter(null).source("").get();
+		long deleted = bulkByScrollResponse.getDeleted();
+
+		// 根据查询条件异步的删除
+		DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient).filter(null).source("")
+				.execute(new ActionListener<BulkByScrollResponse>() {
+					@Override
+					public void onResponse(BulkByScrollResponse response) {//
+						long deleted2 = response.getDeleted();
+					}
+
+					@Override
+					public void onFailure(Exception e) {// 失败的话 做处理结果
+					}
+				});
+
+		MultiGetResponse multiGetResponse = transportClient.prepareMultiGet().add("index1", "type1", "id or ids数组")
+				.add("index1", "type1", "id or ids数组").get();
+
+		BulkRequest bulkRequest = new BulkRequest();
+		bulkRequest.add(new IndexRequest("", "", "").source(new HashMap<String, Object>()));
+		bulkRequest.add(new IndexRequest("", "", "").source(new HashMap<String, Object>()));
+		bulkRequest.add(new IndexRequest("", "", "").source(new HashMap<String, Object>()));
+		BulkResponse bulkResponse = transportClient.bulk(bulkRequest).get();
+		if (bulkResponse.hasFailures()) {
+			String buildFailureMessage = bulkResponse.buildFailureMessage();
+		}
 	}
 
 	@ResponseBody
@@ -86,6 +188,7 @@ public class TrackPortClient {
 
 	/**
 	 * 空间位置查询 GeoShapeQuery
+	 * 
 	 * 
 	 * @throws ExecutionException
 	 * @throws InterruptedException
@@ -206,21 +309,7 @@ public class TrackPortClient {
 		}
 	}
 
-	/**
-	 * { "mappings": { "geom": { "properties": { "location": { "type": "geo_shape"
-	 * },
-	 * 
-	 * "type": { "type": "text", "fields": { "keyword": { "type": "keyword",
-	 * "ignore_above": 256 } } },"properties": { "properties": { "auto": { "type":
-	 * "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
-	 * }, "fusion": { "type": "text", "fields": { "keyword": { "type": "keyword",
-	 * "ignore_above": 256 } } }, "recog": { "type": "text", "fields": { "keyword":
-	 * { "type": "keyword", "ignore_above": 256 } } }, "survey": { "type": "text",
-	 * "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } },
-	 * "track_id": { "type": "text", "fields": { "keyword": { "type": "keyword",
-	 * "ignore_above": 256 } } } } } } } } }
-	 * 
-	 */
+
 
 	/**
 	 * mget操作
@@ -300,6 +389,38 @@ public class TrackPortClient {
 		return aggregation2.toString();
 	}
 
+	
+	
+	
+	/**
+	 * 分组查询数量
+	 * 
+	 * @Description: TODO
+	 * @author weichengz
+	 * @date 2018年12月23日 下午6:30:58
+	 */
+	private Object agg1() throws InterruptedException, ExecutionException {
+	   SearchResponse searchResponse = transportClient.prepareSearch("geom").setTypes("geom").addAggregation(AggregationBuilders.terms("num").field("properties.ADCODE")).get();
+		Map<String, Object> map=new HashMap<>();
+		map.put("hits", searchResponse.getHits());
+		map.put("took", searchResponse.getTook());
+		map.put("agg", searchResponse.getAggregations().get("num"));
+	   return map;
+	}
+	private Object agg2() throws InterruptedException, ExecutionException {
+		SearchRequest request=new SearchRequest("geom");
+		request.types("geom");
+		SearchSourceBuilder sourceBuilder=new SearchSourceBuilder();
+		sourceBuilder.aggregation(AggregationBuilders.terms("num").field("properties.ADCODE"));
+		request.source(sourceBuilder);
+		SearchResponse searchResponse = transportClient.search(request).get();
+		Map<String, Object> map=new HashMap<>();
+		map.put("hits", searchResponse.getHits());
+		map.put("took", searchResponse.getTook());
+		return map;
+	}
+	
+	
 	/**
 	 * 分组查询数量
 	 * 

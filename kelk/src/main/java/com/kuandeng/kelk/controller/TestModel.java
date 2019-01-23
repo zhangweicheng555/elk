@@ -15,6 +15,8 @@ public class TestModel implements Serializable {
 	private Long took;
 	private Long totalHits;
 
+
+	
 	List<Map<String, Object>> list = new ArrayList<>();
 
 	public Long getTookInMillis() {
