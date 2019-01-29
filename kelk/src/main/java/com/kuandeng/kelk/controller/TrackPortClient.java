@@ -15,8 +15,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
@@ -46,16 +48,14 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
-import org.elasticsearch.index.search.stats.SearchStats.Stats;
-import org.elasticsearch.search.DocValueFormat.DateTime;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.bucket.range.RangeAggregator.Range;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.terms.LongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.LongTerms.Bucket;
@@ -66,21 +66,18 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.joda.time.DateTimeZone;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.alibaba.fastjson.JSONObject;
 import com.kuandeng.kelk.model.TaskModel;
-
-import io.swagger.annotations.ApiParam;
+import com.kuandeng.kelk.model.TaskModel2;
 
 @Controller
 @RequestMapping(value = "/elk")
@@ -92,81 +89,190 @@ public class TrackPortClient {
 	@ResponseBody
 	@RequestMapping(value = "/zwc")
 	public Object testMode() throws Exception {
-		return analyzeTask2();
+		return analyzeByDate1();
 	}
+
+	/**
+	 * 根据日期聚合 过滤 在统计某个字段
+	 * 
+	 * @return
+	 * @throws ParseException
+	 */
+	private Object analyzeByDate1() throws ParseException {
+		Map<String, String> map = new LinkedHashMap<>();
+		
+		SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		df2.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		SearchResponse searchResponse = transportClient.prepareSearch("td").setTypes("td")
+				// .setQuery(QueryBuilders.rangeQuery("createdate").gte(1545753600000l).lte(1546099200000l))
+				// 时间戳 以这样的方式过滤
+				.addAggregation(AggregationBuilders.dateHistogram("dateAgg").field("createdate")
+						.dateHistogramInterval(DateHistogramInterval.DAY).order(BucketOrder.key(true)).subAggregation(
+								AggregationBuilders.terms("stateAgg").field("state").order(BucketOrder.count(false))))
+				.get();
+
+		Histogram timeAgg = searchResponse.getAggregations().get("dateAgg");
+		List<? extends org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket> buckets = timeAgg
+				.getBuckets();
+		for (org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : buckets) {
+
+			String key = bucket.getKey().toString();
+			key = df1.format(df2.parse(key));
+			Long num = bucket.getDocCount();
+
+			LongTerms terms = bucket.getAggregations().get("stateAgg");
+			List<Bucket> buckets2s = terms.getBuckets();
+			for (Bucket bucket2 : buckets2s) {
+				map.put(key + "_" + bucket2.getKey(), num + "_" + bucket2.getDocCount());
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * @return
+	 * @throws ParseException
+	 */
+	private Object analyzeByDate() throws ParseException {
+		Map<String, Long> map = new LinkedHashMap<>();
+
+		SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		df2.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		SearchResponse searchResponse = transportClient.prepareSearch("td").setTypes("td")
+				// .setQuery(QueryBuilders.rangeQuery("createdate").gte(1545753600000l).lte(1546099200000l))
+				// 时间戳 以这样的方式过滤
+				.addAggregation(AggregationBuilders.dateHistogram("dateAgg").field("createdate")
+						.dateHistogramInterval(DateHistogramInterval.DAY).order(BucketOrder.key(true)))
+				.get();
+
+		Histogram timeAgg = searchResponse.getAggregations().get("dateAgg");
+		List<? extends org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket> buckets = timeAgg
+				.getBuckets();
+		for (org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : buckets) {
+
+			String key = bucket.getKey().toString();
+			key = df1.format(df2.parse(key));
+			Long num = bucket.getDocCount();
+
+			map.put(key, num);
+		}
+		return map;
+	}
+
 	@ResponseBody
 	@RequestMapping(value = "/zwcn")
 	public Object testModen() throws Exception {
 		return importCsv();
 	}
 
-	
-
 	/**
 	 * 日期聚合处理
+	 * 
 	 * @return
 	 * @throws ParseException
 	 */
-	private Object analyzeTask2() throws ParseException  {
+	private Object analyzeTask2() throws ParseException {
 		SearchResponse actionGet = transportClient.prepareSearch("task").setTypes("task")
 				.setQuery(QueryBuilders.rangeQuery("createdate").gte(1548314057990d).lte(1548314057994d))
 				.addAggregation(AggregationBuilders.terms("agg").field("createdate").size(2000)).execute().actionGet();
-		
+
 		LongTerms terms = actionGet.getAggregations().get("agg");
 		List<Bucket> buckets = terms.getBuckets();
 		for (Bucket bucket : buckets) {
-			System.out.println(bucket.getKey()+"----"+bucket.getDocCount());
+			System.out.println(bucket.getKey() + "----" + bucket.getDocCount());
 		}
 		return actionGet;
 	}
-	
-	
-	
-	
+
 	/**
 	 * 多组分组排序聚合
+	 * 
 	 * @return
 	 */
 	private Object analyzeTask() {
-		SearchResponse actionGet = transportClient.prepareSearch("task").setTypes("task").addAggregation(AggregationBuilders.terms("agg").field("projid").order(BucketOrder.key(true)).size(300000).subAggregation(AggregationBuilders.terms("num").field("state").size(500))).execute().actionGet();
+		SearchResponse actionGet = transportClient.prepareSearch("task").setTypes("task")
+				.addAggregation(AggregationBuilders.terms("agg").field("projid").order(BucketOrder.key(true))
+						.size(300000).subAggregation(AggregationBuilders.terms("num").field("state").size(500)))
+				.execute().actionGet();
 		Aggregations aggregations = actionGet.getAggregations();
-		LongTerms aggTerms=aggregations.get("agg");
+		LongTerms aggTerms = aggregations.get("agg");
 		List<Bucket> buckets = aggTerms.getBuckets();
 		for (Bucket bucket : buckets) {
 			LongTerms numTerms = bucket.getAggregations().get("num");
 			List<Bucket> buckets2 = numTerms.getBuckets();
 			for (Bucket bucket2 : buckets2) {
-				System.out.println(bucket.getKey()+"   "+bucket2.getKey()+"   "+bucket2.getDocCount());
+				System.out.println(bucket.getKey() + "   " + bucket2.getKey() + "   " + bucket2.getDocCount());
 			}
 		}
 		return actionGet;
 	}
-	
+
 	/**
 	 * 统计不同项目下的各个状态的任务的数量
+	 * 
 	 * @return
 	 */
 	private Object analyzeTask1() {
-		SearchResponse actionGet = transportClient.prepareSearch("task").setTypes("task").addAggregation(AggregationBuilders.terms("agg").field("projId")).execute().actionGet();
+		SearchResponse actionGet = transportClient.prepareSearch("task").setTypes("task")
+				.addAggregation(AggregationBuilders.terms("agg").field("projId")).execute().actionGet();
 		Aggregations aggregations = actionGet.getAggregations();
-		LongTerms aggTerms=aggregations.get("agg");
+		LongTerms aggTerms = aggregations.get("agg");
 		List<Bucket> buckets = aggTerms.getBuckets();
 		for (Bucket bucket : buckets) {
-			System.out.println(bucket.getKey()+"----"+bucket.getKeyAsString()+"----"+bucket.getDocCount());
+			System.out.println(bucket.getKey() + "----" + bucket.getKeyAsString() + "----" + bucket.getDocCount());
 		}
 		return "success";
 	}
 
+	/**
+	 * 导入时间戳任务表的数据
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	public Object importCsvDateTime() throws Exception {
+		InputStream inputStream = null;
+		BufferedReader bufferedReader = null;
+		File file = ResourceUtils.getFile("classpath:taskModel.csv");
+		bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 
+		BulkRequest request = new BulkRequest();
+		String str = null;
+		while ((str = bufferedReader.readLine()) != null) {
+			String[] strArray = str.split(",");
+			TaskModel2 taskModel = new TaskModel2(Integer.valueOf(strArray[0]), Integer.valueOf(strArray[1]),
+					strArray[2], Integer.valueOf(strArray[3]), strArray[4], Long.valueOf(strArray[5].toString()),
+					strArray[6], Long.valueOf(strArray[7].toString()), Integer.valueOf(strArray[8]),
+					Integer.valueOf(strArray[9]), Integer.valueOf(strArray[10]), Integer.valueOf(strArray[11]),
+					Integer.valueOf(strArray[12]));
+			IndexRequest indexRequest = new IndexRequest("td1", "td1");
+			System.out.println(JSONObject.toJSONString(taskModel));
+			indexRequest.source(JSONObject.toJSONString(taskModel), XContentType.JSON);
+			request.add(indexRequest);
+		}
+		BulkResponse bulkResponse = transportClient.bulk(request).get();
 
-
+		if (inputStream != null) {
+			inputStream.close();
+		}
+		if (bufferedReader != null) {
+			bufferedReader.close();
+		}
+		return "success";
+	}
 
 	/**
 	 * 导入任务表的数据
+	 * 
 	 * @return
 	 * @throws Exception
 	 */
 	public Object importCsv() throws Exception {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		InputStream inputStream = null;
 		BufferedReader bufferedReader = null;
 		File file = ResourceUtils.getFile("classpath:taskModel.csv");
@@ -177,10 +283,12 @@ public class TrackPortClient {
 		while ((str = bufferedReader.readLine()) != null) {
 			String[] strArray = str.split(",");
 			TaskModel taskModel = new TaskModel(Integer.valueOf(strArray[0]), Integer.valueOf(strArray[1]), strArray[2],
-					Integer.valueOf(strArray[3]), strArray[4], Long.valueOf(strArray[5].toString()), strArray[6],
-					Long.valueOf(strArray[7].toString()), Integer.valueOf(strArray[8]), Integer.valueOf(strArray[9]),
-					Integer.valueOf(strArray[10]), Integer.valueOf(strArray[11]), Integer.valueOf(strArray[12]));
-			IndexRequest indexRequest = new IndexRequest("task", "task");
+					Integer.valueOf(strArray[3]), strArray[4], new Date(Long.valueOf(strArray[5].toString())),
+					strArray[6], new Date(Long.valueOf(strArray[7].toString())), Integer.valueOf(strArray[8]),
+					Integer.valueOf(strArray[9]), Integer.valueOf(strArray[10]), Integer.valueOf(strArray[11]),
+					Integer.valueOf(strArray[12]));
+			IndexRequest indexRequest = new IndexRequest("datemodel", "datemodel");
+			System.out.println(JSONObject.toJSONString(taskModel));
 			indexRequest.source(JSONObject.toJSONString(taskModel), XContentType.JSON);
 			request.add(indexRequest);
 		}

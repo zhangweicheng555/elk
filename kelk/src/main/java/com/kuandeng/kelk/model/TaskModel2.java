@@ -5,7 +5,7 @@ import java.util.Date;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-public class TaskModel implements Serializable {
+public class TaskModel2 implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -14,11 +14,9 @@ public class TaskModel implements Serializable {
 	private String name;
 	private Integer state;
 	private String user;
-	@JSONField(format="yyyy-MM-dd HH:mm:ss")
-	private Date createdate;
+	private Long createdate;
 	private String updateuser;
-	@JSONField(format="yyyy-MM-dd HH:mm:ss")
-	private Date updatedate;
+	private Long updatedate;
 	private Integer deleted;
 	private Integer priority;
 	private Integer range;
@@ -73,19 +71,19 @@ public class TaskModel implements Serializable {
 		this.updateuser = updateuser;
 	}
 
-	public Date getCreatedate() {
+	public Long getCreatedate() {
 		return createdate;
 	}
 
-	public void setCreatedate(Date createdate) {
+	public void setCreatedate(Long createdate) {
 		this.createdate = createdate;
 	}
 
-	public Date getUpdatedate() {
+	public Long getUpdatedate() {
 		return updatedate;
 	}
 
-	public void setUpdatedate(Date updatedate) {
+	public void setUpdatedate(Long updatedate) {
 		this.updatedate = updatedate;
 	}
 
@@ -129,8 +127,8 @@ public class TaskModel implements Serializable {
 		this.projid = projid;
 	}
 
-	public TaskModel(Integer id, Integer type, String name, Integer state, String user, Date createdate,
-			String updateuser, Date updatedate, Integer deleted, Integer priority, Integer range, Integer sourcerange,
+	public TaskModel2(Integer id, Integer type, String name, Integer state, String user, Long createdate,
+			String updateuser, Long updatedate, Integer deleted, Integer priority, Integer range, Integer sourcerange,
 			Integer projid) {
 		super();
 		this.id = id;
@@ -148,7 +146,7 @@ public class TaskModel implements Serializable {
 		this.projid = projid;
 	}
 
-	public TaskModel() {
+	public TaskModel2() {
 		super();
 	}
 

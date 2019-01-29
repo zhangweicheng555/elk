@@ -1,0 +1,152 @@
+
+
+1.映射  以时间戳的形式
+{
+    "td": {
+        "mappings": {
+            "td": {
+                "properties": {
+                    "createdate": {
+                        "type": "date"        //这里虽然是日期  但是我们存储的时候  是日期戳的形式
+                    },
+                    "deleted": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "name": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "priority": {
+                        "type": "long"
+                    },
+                    "projid": {
+                        "type": "long"
+                    },
+                    "range": {
+                        "type": "long"
+                    },
+                    "sourcerange": {
+                        "type": "long"
+                    },
+                    "state": {
+                        "type": "long"
+                    },
+                    "type": {
+                        "type": "long"
+                    },
+                    "updatedate": {
+                        "type": "date"
+                    },
+                    "updateuser": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "user": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+2.java代码   注意这里日期 以时间戳存储的时候  是不存在  因时区原因差距8小时的问题的  所以这个注意，别误导了
+具体的实现代码 见下图
+private Object analyzeByDate() throws ParseException {
+		Map<String, Long> map = new LinkedHashMap<>();
+
+		SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		df2.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		SearchResponse searchResponse = transportClient.prepareSearch("td").setTypes("td")
+				//.setQuery(QueryBuilders.rangeQuery("createdate").gte(1545753600000l).lte(1546099200000l))  时间戳 以这样的方式过滤
+				.addAggregation(AggregationBuilders.dateHistogram("dateAgg").field("createdate")
+						.dateHistogramInterval(DateHistogramInterval.MONTH)
+						.order(BucketOrder.key(true))
+						)
+				.get();
+
+		Histogram timeAgg = searchResponse.getAggregations().get("dateAgg");
+		List<? extends org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket> buckets = timeAgg
+				.getBuckets();
+		for (org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : buckets) {
+
+//			String key = sdf.format(new Date(Long.valueOf(bucket.getKey().toString())));
+			String key = bucket.getKey().toString();
+			key=df1.format(df2.parse(key));
+			Long num = bucket.getDocCount();
+
+			
+			//
+			Long count = map.get(key);
+			if (count != null) {
+				map.put(key, num + count);
+			} else {
+				map.put(key, num);
+			}
+			//System.out.println(df1.format(df2.parse(key)) + "--------------" + bucket.getDocCount());
+		}
+		return map;
+	}
+	
+	
+	
+	
+		/**
+	 * 根据日期聚合 过滤 在统计某个字段
+	 * 
+	 * @return
+	 * @throws ParseException
+	 */
+	private Object analyzeByDate1() throws ParseException {
+		Map<String, String> map = new LinkedHashMap<>();
+
+		SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		df2.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		SearchResponse searchResponse = transportClient.prepareSearch("td").setTypes("td")
+				// .setQuery(QueryBuilders.rangeQuery("createdate").gte(1545753600000l).lte(1546099200000l))
+				// 时间戳 以这样的方式过滤
+				.addAggregation(AggregationBuilders.dateHistogram("dateAgg").field("createdate")
+						.dateHistogramInterval(DateHistogramInterval.DAY).order(BucketOrder.key(true)).subAggregation(
+								AggregationBuilders.terms("stateAgg").field("state").order(BucketOrder.count(false))))
+				.get();
+
+		Histogram timeAgg = searchResponse.getAggregations().get("dateAgg");
+		List<? extends org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket> buckets = timeAgg
+				.getBuckets();
+		for (org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : buckets) {
+
+			String key = bucket.getKey().toString();
+			key = df1.format(df2.parse(key));
+			Long num = bucket.getDocCount();
+
+			LongTerms terms = bucket.getAggregations().get("stateAgg");
+			List<Bucket> buckets2s = terms.getBuckets();
+			for (Bucket bucket2 : buckets2s) {
+				map.put(key + "_" + bucket2.getKey(), num + "_" + bucket2.getDocCount());
+			}
+		}
+		return map;
+	}

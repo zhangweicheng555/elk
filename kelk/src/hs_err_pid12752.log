@@ -1,0 +1,243 @@
+
+               
+
+
+
+
+CREATE TABLE `lte_tdd_cell_check` (                    
+                 `id` varchar(100) NOT NULL,   
+                                   
+                 `eodeBID` varchar(100) NOT NULL,              
+                 `baseStationName` varchar(100) NOT NULL, 
+                 `cellId` varchar(100) NOT NULL, 
+                 `cellName` varchar(100) NOT NULL, 
+                       
+                       
+                       
+                 `upDownRatio` varchar(100) DEFAULT NULL,           
+                 `specialRatio` varchar(100) DEFAULT NULL,  
+                 `eci` varchar(100) DEFAULT NULL,  
+                 `earfcn` varchar(100) DEFAULT NULL,  
+                 `pci` varchar(100) DEFAULT NULL,  
+                 `tac` varchar(100) DEFAULT NULL,  
+                 `rsPower` varchar(100) DEFAULT NULL,  
+                 `pa` varchar(100) DEFAULT NULL,  
+                 `pb` varchar(100) DEFAULT NULL,  
+                 `antennaHangUp` varchar(100) DEFAULT NULL,  
+                 `azimuth` varchar(100) DEFAULT NULL,  
+                 `rrcSuccRateAttempt` varchar(100) DEFAULT NULL,  
+                 `rrcSuccRateSucc` varchar(100) DEFAULT NULL,  
+                 `rrcSuccRateFailure` varchar(100) DEFAULT NULL,  
+                 `erabSuccRateAttempt` varchar(100) DEFAULT NULL,  
+                 `erabSuccRateSucc` varchar(100) DEFAULT NULL,  
+                 `erabSuccRateFailure` varchar(100) DEFAULT NULL,  
+                 `accessSuccRateAttempt` varchar(100) DEFAULT NULL,  
+                 `accessSuccRateSucc` varchar(100) DEFAULT NULL,  
+                 `accessSuccRateFailure` varchar(100) DEFAULT NULL,  
+                 `volteDownWire` varchar(100) DEFAULT NULL,  
+                 `volteDelay` varchar(100) DEFAULT NULL,  
+                 `systemInChangeAttempt` varchar(100) DEFAULT NULL,  
+                 `systemInChangeSuccSucc` varchar(100) DEFAULT NULL,  
+                 `systemInChangefailure` varchar(100) DEFAULT NULL,  
+                 `systemOutChangeAttempt` varchar(100) DEFAULT NULL,  
+                 `systemOutChangeSuccSucc` varchar(100) DEFAULT NULL,  
+                 `systemOutChangefailure` varchar(100) DEFAULT NULL,  
+                 `floorHeight` varchar(100) DEFAULT NULL,  
+                 `testDate` varchar(100) DEFAULT NULL,  
+                 
+                 `projId` int(11) NOT NULL,    
+                  `createTime` datetime DEFAULT NULL,             
+                 `updateTime` datetime DEFAULT NULL, 
+                 `createAt` int(11) DEFAULT NULL,  
+                 PRIMARY KEY (`id`)                              
+               ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;         
+
+
+
+
+CREATE TABLE `lte_tdd_parameter` (                    
+                 `id` varchar(100) NOT NULL,   
+                                   
+                 `enodeBID` varchar(100) NOT NULL,              
+                 `baseStationName` varchar(100) NOT NULL, 
+                 `cellId` varchar(100) NOT NULL, 
+                 `cellName` varchar(100) NOT NULL, 
+                       
+                       
+                       
+                 `testDate` varchar(100) DEFAULT NULL,  
+                 `ftpDownPass` varchar(100) DEFAULT NULL,           
+                 `ftpUpPass` varchar(100) DEFAULT NULL,  
+                 `convenienceCoveragePerPass` varchar(100) DEFAULT NULL,  
+                 
+                 
+                 `eci` varchar(100) DEFAULT NULL,  
+                 `earfcn` varchar(100) DEFAULT NULL,  
+                 `pci` varchar(100) DEFAULT NULL,  
+                 `tac` varchar(100) DEFAULT NULL,
+                 
+                   
+                 `csfCallAttempt` varchar(100) DEFAULT NULL,  
+                 `csfbCallSucc` varchar(100) DEFAULT NULL,  
+                 `csfbCallFailure` varchar(100) DEFAULT NULL,  
+                 
+                 
+                 `volteCallAttempt` varchar(100) DEFAULT NULL,  
+                 `volteCallSucc` varchar(100) DEFAULT NULL,  
+                 `volteCallFailure` varchar(100) DEFAULT NULL,  
+                 
+                 `volteDownAttempt` varchar(100) DEFAULT NULL,  
+                 `volteDownSucc` varchar(100) DEFAULT NULL,  
+                 `volteDownFailure` varchar(100) DEFAULT NULL,  
+                 
+                 `ftpDownCover` varchar(100) DEFAULT NULL,  
+                 `ftpDownCoverRandom` varchar(100) DEFAULT NULL,  
+                 
+                 
+                 `ftpDownThroughput` varchar(100) DEFAULT NULL,  
+                 `ftpDownThroughputRandom` varchar(100) DEFAULT NULL,  
+                 
+                 `ftpUpCover` varchar(100) DEFAULT NULL,  
+                 `ftpUpCoverRandom` varchar(100) DEFAULT NULL,  
+                 `ftpUpThroughput` varchar(100) DEFAULT NULL,  
+                 `ftpUpThroughputRandom` varchar(100) DEFAULT NULL,  
+                 
+                 
+                 
+                 
+                 
+                 `projId` int(11) NOT NULL,    
+                  `createTime` datetime DEFAULT NULL,             
+                 `updateTime` datetime DEFAULT NULL, 
+                 `createAt` int(11) DEFAULT NULL,  
+                 
+                  `lowNum` varchar(100) DEFAULT NULL,  
+                  `lowRsrp` varchar(100) DEFAULT NULL,  
+                  `lowSinr` varchar(100) DEFAULT NULL,  
+                  `lowCallSuccPercent` varchar(100) DEFAULT NULL,  
+                 
+                 
+                  `middleNum` varchar(100) DEFAULT NULL,  
+                  `middleRsrp` varchar(100) DEFAULT NULL,  
+                  `middleSinr` varchar(100) DEFAULT NULL,  
+                  `middleCallSuccPercent` varchar(100) DEFAULT NULL,  
+                 
+                  `highNum` varchar(100) DEFAULT NULL,  
+                  `highRsrp` varchar(100) DEFAULT NULL,  
+                  `highSinr` varchar(100) DEFAULT NULL,  
+                  `highCallSuccPercent` varchar(100) DEFAULT NULL,  
+                 
+                  `baseNum` varchar(100) DEFAULT NULL,  
+                  `baseRsrp` varchar(100) DEFAULT NULL,  
+                  `baseSinr` varchar(100) DEFAULT NULL,  
+                  `baseCallSuccPercent` varchar(100) DEFAULT NULL,  
+                 
+                  `elevatorNum` varchar(100) DEFAULT NULL,  
+                  `elevatorRsrp` varchar(100) DEFAULT NULL,  
+                  `elevatorSinr` varchar(100) DEFAULT NULL,  
+                  `elevatorCallSuccPercent` varchar(100) DEFAULT NULL,  
+                 
+                  `volteSwitch` varchar(100) DEFAULT NULL,  
+                 
+                  `rsrpImage` varchar(100) DEFAULT NULL,  
+                  `sinrImage` varchar(100) DEFAULT NULL,  
+                  `downRateImage` varchar(100) DEFAULT NULL,  
+                  `upRateImage` varchar(100) DEFAULT NULL,  
+                  `flowCoverRsrpImage` varchar(100) DEFAULT NULL,  
+                  `flowCoverSinrImage` varchar(100) DEFAULT NULL,  
+                  `flowCoverpCIImage` varchar(100) DEFAULT NULL,  
+                  `testFlowImage`  text CHARACTER SET utf8,    
+                 
+                 PRIMARY KEY (`id`)                              
+               ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4        ;   
+
+
+
+
+CREATE TABLE `lte_tdd_plan` (                    
+                 `id` varchar(100) NOT NULL,   
+                                   
+                 `enodeBID` varchar(100) NOT NULL,              
+                 `baseStationName` varchar(100) NOT NULL, 
+                       
+                 `testDate` varchar(100)  varchar(100) NOT NULL, 
+                  `districtCountry` varchar(100) DEFAULT NULL,  
+                  `address` varchar(100) DEFAULT NULL,  
+                  `baseStationType` varchar(100) DEFAULT NULL,  
+                  `deviceType` varchar(100) DEFAULT NULL,  
+                  `videoFrequency` varchar(100) DEFAULT NULL,  
+                  `longitude` varchar(100) DEFAULT NULL,  
+                  `latitude` varchar(100) DEFAULT NULL,  
+                  `broadBand` varchar(100) DEFAULT NULL,  
+                  `ipConfig` varchar(100) DEFAULT NULL,  
+                  `testPerson` varchar(100) DEFAULT NULL,  
+                  `testPersonPhone` varchar(100) DEFAULT NULL,  
+                  `backPerson` varchar(100) DEFAULT NULL,  
+                  `backPersonPhone` varchar(100) DEFAULT NULL,  
+                  `backPersonPhone` varchar(100) DEFAULT NULL,  
+                 
+                       
+                       
+                 `dealPersonId` varchar(100) DEFAULT NULL,  
+                 `administrativeArea` varchar(100) DEFAULT NULL,  
+                 `commonStationName` varchar(100) DEFAULT NULL,  
+                 `stationAddressType` varchar(100) DEFAULT NULL,  
+                 `buildingFunction` varchar(100) DEFAULT NULL,  
+                 `floorNumber` varchar(100) DEFAULT NULL,  
+                 `oriSfSystem` varchar(100) DEFAULT NULL,  
+                 `combinationRoad` varchar(100) DEFAULT NULL,  
+                 `singleAndDoubleRold` varchar(100) DEFAULT NULL,  
+                 `combinationRoadInstallOk` varchar(100) DEFAULT NULL,  
+                 
+                 `remark` text CHARACTER SET utf8,   
+                 
+                 `status` int(11) DEFAULT NULL,                  
+                      
+                 `projId` int(11) NOT NULL,    
+                 `createTime` datetime DEFAULT NULL,             
+                 `updateTime` datetime DEFAULT NULL, 
+                 `createAt` int(11) DEFAULT NULL,  
+                 
+                  `stationChangeTestPass` varchar(100) DEFAULT NULL,  
+                  `threeFourOperatePass` varchar(100) DEFAULT NULL,  
+                  `combinationWayPass` varchar(100) DEFAULT NULL,  
+                  `deviceSupportPass` varchar(100) DEFAULT NULL,  
+                  `wirePointsReasonablePass` varchar(100) DEFAULT NULL,  
+                  `wirePortOutputPass` varchar(100) DEFAULT NULL,  
+                  `networkPlatformPass` varchar(100) DEFAULT NULL,  
+                  `informationPlatformPass` varchar(100) DEFAULT NULL,  
+                  `mrrPass` varchar(100) DEFAULT NULL,  
+                  `cellConfigPass` varchar(100) DEFAULT NULL,  
+                             
+                 PRIMARY KEY (`id`)                              
+               ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4         ;  
+
+
+
+CREATE TABLE `lte_tdd_plane` (                    
+                 `id` varchar(100) NOT NULL,   
+                                   
+                 `enodeBID` varchar(100) NOT NULL,              
+                 `baseStationName` varchar(100) NOT NULL, 
+                 `testDate` varchar(100)  varchar(100) NOT NULL, 
+                       
+                  `csfbFunctionTestPass` varchar(100) DEFAULT NULL,  
+                  `volteFunctionTestPass` varchar(100) DEFAULT NULL,  
+                  
+                                  
+                      
+                 `projId` int(11) NOT NULL,    
+                 `createTime` datetime DEFAULT NULL,             
+                 `updateTime` datetime DEFAULT NULL, 
+                 `createAt` int(11) DEFAULT NULL,  
+                 
+                  `allViewPic` varchar(100) DEFAULT NULL,  
+                  `stationEntrancePic` varchar(100) DEFAULT NULL,  
+                             
+                 PRIMARY KEY (`id`)                              
+               ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4         ;  
+
+
+               
+               
+               
